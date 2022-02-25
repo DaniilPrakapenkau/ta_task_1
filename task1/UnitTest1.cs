@@ -8,22 +8,42 @@ namespace task1
 {
     public class Tests
     {
+        private ChromeDriver chromeDriver;
+        private WebDriverWait wait;
+        private string continueShoppingButton = "//*[@title='Continue shopping']/span";
+
         [SetUp]
         public void Setup()
         {
+            chromeDriver = new ChromeDriver();
+            wait = new WebDriverWait(chromeDriver, TimeSpan.FromSeconds(15));
         }
 
         [Test]
         public void Test1()
         {
-            var chromeDriver = new ChromeDriver();
             chromeDriver.Url = "http://automationpractice.com/index.php";
-            chromeDriver.FindElement(By.ClassName("login")).Click();
-            chromeDriver.FindElement(By.Id("email_create")).SendKeys("dprakapenkau@exadel.by");
-            chromeDriver.FindElement(By.Id("SubmitCreate")).Click();
+            Regisrt();
+            chromeDriver.FindElement(By.XPath("//*[contains(@class, 'sf-menu')]/li/a[@title='Dresses']")).Click();
+            chromeDriver.FindElement(By.XPath("//*[contains(@id, 'categories_block_left')]//a[contains(text(), 'Summer Dresses')]")).Click();
+            Search("dress");
+            AddToCart(chromeDriver.FindElement(By.XPath("//*[@id='best-sellers_block_right']//a[contains(text(), 'Printed Chiffon Dress')]")));
+            chromeDriver.Navigate().Back();
+            AddToCart(chromeDriver.FindElement(By.XPath("//*[@id='best-sellers_block_right']//a[contains(text(), 'T-shirt')]")));
+            chromeDriver.FindElement(By.CssSelector("a[title='View my shopping cart']")).Click();
+            Assert.Multiple(() => 
+            {
+                Assert.IsNotEmpty(chromeDriver.FindElements(By.XPath("//a[contains(text(), 'Printed Chiffon Dress')]")));
+                Assert.IsNotEmpty(chromeDriver.FindElements(By.XPath("//tr//a[contains(text(), 'Faded Short Sleeve T-shirts')]")));
+            });
+        }
 
-            WebDriverWait wait = new WebDriverWait(chromeDriver, TimeSpan.FromSeconds(15));
-            wait.Until(e=>e.FindElement(By.Id("account-creation_form")));
+        private void Regisrt()
+        {
+            chromeDriver.FindElement(By.ClassName("login")).Click();
+            chromeDriver.FindElement(By.Id("email_create")).SendKeys("dprakapenka_@exadel.by");
+            chromeDriver.FindElement(By.Id("SubmitCreate")).Click();
+            wait.Until(e => e.FindElement(By.Id("account-creation_form")));
             chromeDriver.FindElement(By.Id("id_gender1")).Click();
             chromeDriver.FindElement(By.Id("customer_firstname")).SendKeys("Daniil");
             chromeDriver.FindElement(By.Id("customer_lastname")).SendKeys("Prokopenkov");
@@ -44,25 +64,27 @@ namespace task1
             aliasAddress.Clear();
             aliasAddress.SendKeys("dprakapenkau@exadel.com");
             chromeDriver.FindElement(By.Id("submitAccount")).Click();
+        }
 
-            chromeDriver.FindElement(By.XPath("//*[contains(@class, 'sf-menu')]/li/a[@title='Dresses']")).Click();
-            chromeDriver.FindElement(By.XPath("//*[contains(@id, 'categories_block_left')]//a[contains(text(), 'Summer Dresses')]")).Click();
+        private void Search(string searchString)
+        {
             IWebElement search = chromeDriver.FindElement(By.Id("search_query_top"));
             search.Click();
-            search.SendKeys("dress");
+            search.SendKeys(searchString);
             chromeDriver.FindElement(By.CssSelector("button[name = 'submit_search']")).Click();
-            chromeDriver.FindElement(By.XPath("//*[@id='best-sellers_block_right']//a[contains(text(), 'Printed Chiffon Dress')]")).Click();
+        }
+
+        private void AddToCart(IWebElement product)
+        {
+            product.Click();
             chromeDriver.FindElement(By.CssSelector(".exclusive > span")).Click();
-            wait.Until(e => e.FindElement(By.XPath("//*[@title='Continue shopping']/span")).Displayed);
-            chromeDriver.FindElement(By.XPath("//*[@title='Continue shopping']/span")).Click();
-            chromeDriver.Navigate().Back();
-            chromeDriver.FindElement(By.XPath("//*[@id='best-sellers_block_right']//a[contains(text(), 'T-shirt')]")).Click();
-            chromeDriver.FindElement(By.CssSelector(".exclusive > span")).Click();
-            wait.Until(e => e.FindElement(By.XPath("//*[@title='Continue shopping']/span")).Displayed);
-            chromeDriver.FindElement(By.XPath("//*[@title='Continue shopping']/span")).Click();
-            chromeDriver.FindElement(By.CssSelector("a[title='View my shopping cart']")).Click();
-            Assert.IsNotEmpty(chromeDriver.FindElements(By.XPath("//a[contains(text(), 'Printed Chiffon Dress')]")));
-            Assert.IsNotEmpty(chromeDriver.FindElements(By.XPath("//tr//a[contains(text(), 'Faded Short Sleeve T-shirts')]")));
+            wait.Until(e => e.FindElement(By.XPath(continueShoppingButton)).Displayed);
+            chromeDriver.FindElement(By.XPath(continueShoppingButton)).Click();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
             chromeDriver.Close();
         }
     }
